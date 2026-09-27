@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "events": [
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/other/projects/app/docs" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/acme/projects/app/docs/spec" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/acme/projects/app/docs" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/acme/projects/app/secrets/token" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app" },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "unknown" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource": "repo/app", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/acme" } },
+    { "schema_version": 1, "tool": "files.write", "effect": "WRITE", "resource_scope": { "schema_version": 1, "state": "known", "path": "tenants/acme/projects/app" } }
+  ]
+}

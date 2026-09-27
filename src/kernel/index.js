@@ -1,8 +1,9 @@
-/** Pure v0.1 authority-policy evaluator. No imports, ambient state, or I/O. */
+/** Pure authority-policy evaluator. No imports, ambient state, or I/O. */
 
 const EFFECTS = new Set(['READ', 'WRITE', 'EXECUTE', 'DELETE', 'SEND']);
 const OUTCOMES = ['allow', 'deny', 'require_approval'];
 const FIELDS = ['effect', 'actor', 'resource', 'destination'];
+const SCOPE_RELATIONS = { self_or_descendant: 0, descendant: 1, child: 2, self: 3 };
 const COMPILED = Symbol('validated policy');
 const has = (object, key) => Object.hasOwn(object, key);
 const alphabetic = (a, b) => a < b ? -1 : a > b ? 1 : 0;
@@ -53,9 +54,55 @@ function intersects(a, b) {
   return isWildcard(a) ? matchesPattern(a, b) : matchesPattern(b, a);
 }
 
+function scopePath(value, path) {
+  nonempty(value, path);
+  if (!/^[^/*]+(?:\/[^/*]+)*$/.test(value) || value.split('/').some((part) => part === '.' || part === '..')) {
+    fail(path, 'expected literal non-empty path segments without . or ..');
+  }
+}
+
+function normalizeRuleScope(value, path) {
+  record(value, path, ['schema_version', 'state', 'anchor', 'relation'], ['schema_version', 'state']);
+  if (value.schema_version !== 1) fail(`${path}.schema_version`, 'expected 1');
+  if (value.state === 'unknown') {
+    if (has(value, 'anchor') || has(value, 'relation')) fail(path, 'unknown scope cannot have an anchor or relation');
+    return { schema_version: 1, state: 'unknown' };
+  }
+  if (value.state !== 'known') fail(`${path}.state`, 'expected known or unknown');
+  if (!has(value, 'anchor')) fail(`${path}.anchor`, 'required field');
+  if (!has(value, 'relation')) fail(`${path}.relation`, 'required field');
+  scopePath(value.anchor, `${path}.anchor`);
+  if (!has(SCOPE_RELATIONS, value.relation)) fail(`${path}.relation`, 'unknown relationship');
+  return { schema_version: 1, state: 'known', anchor: value.anchor, relation: value.relation };
+}
+
+function scopeMatches(scope, eventScope) {
+  if (scope.state === 'unknown') return eventScope?.state !== 'known';
+  if (eventScope?.state !== 'known') return false;
+  const anchor = scope.anchor.split('/');
+  const path = eventScope.path.split('/');
+  if (!anchor.every((segment, i) => segment === path[i])) return false;
+  const distance = path.length - anchor.length;
+  return scope.relation === 'self' ? distance === 0
+    : scope.relation === 'child' ? distance === 1
+      : scope.relation === 'descendant' ? distance >= 1 : distance >= 0;
+}
+
+function scopeIntersects(a, b) {
+  if (a === undefined || b === undefined) return true;
+  if (a.state !== b.state) return false;
+  if (a.state === 'unknown') return true;
+  const paths = [a.anchor, b.anchor].flatMap((anchor) => [anchor, `${anchor}/__probe__`, `${anchor}/__probe__/__probe__`]);
+  return paths.some((path) => scopeMatches(a, { state: 'known', path }) && scopeMatches(b, { state: 'known', path }));
+}
+
 function vector(constraints) {
+  const scope = constraints.resource_scope;
+  const resource = scope?.state === 'unknown' ? 3 : scope?.state === 'known'
+    ? 4 * scope.anchor.split('/').length + SCOPE_RELATIONS[scope.relation]
+      : has(constraints, 'resource') ? (isWildcard(constraints.resource) ? 1 : 2) : 0;
   return [Number(has(constraints, 'effect')), Number(has(constraints, 'actor')),
-    has(constraints, 'resource') ? (isWildcard(constraints.resource) ? 1 : 2) : 0,
+    resource,
     has(constraints, 'destination') ? (isWildcard(constraints.destination) ? 1 : 2) : 0];
 }
 
@@ -65,7 +112,7 @@ function compare(a, b) {
 }
 
 function normalizeConstraints(value, path) {
-  record(value, path, ['tool', ...FIELDS], ['tool']);
+  record(value, path, ['tool', ...FIELDS, 'resource_scope'], ['tool']);
   nonempty(value.tool, `${path}.tool`);
   if (value.tool.includes('*')) fail(`${path}.tool`, 'wildcards are not supported');
   const result = { tool: value.tool };
@@ -81,6 +128,7 @@ function normalizeConstraints(value, path) {
     }
     result[field] = value[field];
   }
+  if (has(value, 'resource_scope')) result.resource_scope = normalizeRuleScope(value.resource_scope, `${path}.resource_scope`);
   return result;
 }
 
@@ -103,6 +151,9 @@ export function loadPolicy(value) {
     if (outcomes.length !== 1) fail(path, 'expected exactly one outcome');
     const outcome = outcomes[0];
     const constraints = normalizeConstraints(input[outcome], `${path}.${outcome}`);
+    if (outcome === 'allow' && constraints.resource_scope?.state === 'unknown') {
+      fail(`${path}.allow.resource_scope`, 'unknown scope cannot grant authority');
+    }
     const body = JSON.stringify([outcome, Object.entries(constraints).sort(([a], [b]) => alphabetic(a, b))]);
     if (bodies.has(body)) fail(path, 'duplicate outcome and constraints');
     bodies.add(body);
@@ -115,13 +166,15 @@ export function loadPolicy(value) {
       const b = rules[j];
       if (b.outcome === 'deny' || b.outcome === a.outcome || compare(a.specificity, b.specificity)) continue;
       if (a.constraints.tool !== b.constraints.tool) continue;
-      if (FIELDS.every((field) => intersects(a.constraints[field], b.constraints[field]))) {
+      if (FIELDS.every((field) => intersects(a.constraints[field], b.constraints[field])) &&
+        scopeIntersects(a.constraints.resource_scope, b.constraints.resource_scope)) {
         fail('policy.rules', `ambiguous overlap between ${a.id} and ${b.id}`);
       }
     }
   }
   const snapshot = Object.freeze(rules.map((r) => Object.freeze({ ...r,
-    specificity: Object.freeze(r.specificity), constraints: Object.freeze(r.constraints) })));
+    specificity: Object.freeze(r.specificity), constraints: Object.freeze({ ...r.constraints,
+      ...(r.constraints.resource_scope && { resource_scope: Object.freeze(r.constraints.resource_scope) }) }) })));
   const rulesByTool = Object.create(null);
   for (const rule of snapshot) (rulesByTool[rule.constraints.tool] ??= []).push(rule);
   for (const tool of Object.keys(rulesByTool)) Object.freeze(rulesByTool[tool]);
@@ -143,7 +196,7 @@ function validTimestamp(value) {
 
 /** Validate and snapshot a normalized event. */
 export function loadEvent(value) {
-  record(value, 'event', ['schema_version', 'tool', ...FIELDS, 'timestamp'], ['schema_version', 'tool', 'effect']);
+  record(value, 'event', ['schema_version', 'tool', ...FIELDS, 'resource_scope', 'timestamp'], ['schema_version', 'tool', 'effect']);
   if (value.schema_version !== 1) fail('event.schema_version', 'expected 1');
   for (const field of ['tool', ...FIELDS]) {
     if (!has(value, field)) continue;
@@ -151,7 +204,22 @@ export function loadEvent(value) {
   }
   if (!EFFECTS.has(value.effect)) fail('event.effect', 'unknown effect');
   if (has(value, 'timestamp') && !validTimestamp(value.timestamp)) fail('event.timestamp', 'expected a valid UTC RFC 3339 instant');
-  return Object.freeze({ ...value });
+  let resource_scope;
+  if (has(value, 'resource_scope')) {
+    const path = 'event.resource_scope';
+    const scope = value.resource_scope;
+    record(scope, path, ['schema_version', 'state', 'path'], ['schema_version', 'state']);
+    if (scope.schema_version !== 1) fail(`${path}.schema_version`, 'expected 1');
+    if (scope.state === 'unknown') {
+      if (has(scope, 'path')) fail(`${path}.path`, 'unknown scope cannot have a path');
+      resource_scope = Object.freeze({ schema_version: 1, state: 'unknown' });
+    } else if (scope.state === 'known') {
+      if (!has(scope, 'path')) fail(`${path}.path`, 'required field');
+      scopePath(scope.path, `${path}.path`);
+      resource_scope = Object.freeze({ schema_version: 1, state: 'known', path: scope.path });
+    } else fail(`${path}.state`, 'expected known or unknown');
+  }
+  return Object.freeze({ ...value, ...(resource_scope && { resource_scope }) });
 }
 
 function differences(constraints, event) {
@@ -162,6 +230,10 @@ function differences(constraints, event) {
     if (!has(event, field)) reasons.push(`${field} missing`);
     else if (field === 'resource' || field === 'destination' ? !matchesPattern(constraints[field], event[field])
       : constraints[field] !== event[field]) reasons.push(`${field} mismatch`);
+  }
+  if (has(constraints, 'resource_scope') && !scopeMatches(constraints.resource_scope, event.resource_scope)) {
+    reasons.push(constraints.resource_scope.state === 'unknown' ? 'resource_scope known'
+      : event.resource_scope?.state === 'known' ? 'resource_scope relation mismatch' : 'resource_scope unknown');
   }
   return reasons;
 }

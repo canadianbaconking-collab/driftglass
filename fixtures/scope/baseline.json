@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "default": "deny",
+  "rules": [
+    { "id": "write-repo", "allow": { "tool": "files.write", "effect": "WRITE", "resource": "repo/*" } }
+  ]
+}

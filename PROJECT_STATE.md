@@ -1,5 +1,14 @@
 # Driftglass project state
 
+## v0.3 — implementation complete
+
+- Added an optional, separately versioned `resource_scope` object to policies and events. Known paths support `self`, `child`, `descendant`, and `self_or_descendant` relationships with literal segments; missing and explicitly unknown event scope can be handled by explicit deny or approval rules. Unknown scope cannot be granted by a scope-specific allow rule.
+- Extended specificity ordering by anchor depth and relationship, and extended load-time overlap rejection to scoped rules. Explicit deny remains dominant. The v0.1 `resource` exact and terminal wildcard semantics are unchanged; no broader wildcard syntax was needed.
+- Added synthetic scope policy and traces, CLI regression demonstration, strict schema and precedence tests, and a normative [scope contract](docs/SCOPE_V0.3.md). The 50 v0.1 golden decisions and outputs remain unchanged with optional scope input.
+- 156 local tests pass. The 10,000-event / 200-rule benchmark remains below the one-second target (199.52 ms median in the latest local Node 24 Linux run); CI continues to record timing without gating on it.
+
+Hosted CI for the v0.3 commit will be recorded after publication. Scope paths are trusted normalized inputs; real provider normalization remains v0.4 work.
+
 ## v0.2 — implementation complete
 
 - Recursive, stable JSON trace-directory reader. Each file is one trace; nested relative paths identify runs. Symlinks and invalid corpora fail the run.
@@ -20,15 +29,14 @@ Hosted CI for the v0.2 commit passed all 120 tests and uploaded the benchmark ar
 
 Validation: `npm run check` passes 100 tests (including the 50 golden decisions), and the CLI example returns `ALLOW`. The GitHub `main` tree matches the tested source. The first hosted CI run ([Actions #36326317422](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36326317422)) completed successfully.
 
-## Next checkpoint: v0.3
+## Next checkpoint: v0.4
 
-Add resource narrowing and relationships, explicit unknown-resource handling, and versioned richer scope syntax only where the v0.1 grammar cannot represent a needed relationship. Preserve the v0.1 fixture decisions and the evaluator's I/O boundary. Real trace adapters follow in v0.4.
+Build Coldgate native, OpenTelemetry, and OpenAI trace adapters on the caller side of the evaluator boundary. Normalize known scope paths only when the source provides enough evidence; mark unresolved resource scope unknown, reject unmapped effects, and test adapter output against the v0.1 and v0.3 fixtures. Compare real sanitized traces locally without sending unredacted data to hosted CI.
 
 ## Subsequent milestones
 
 | Version | Planned scope |
 | --- | --- |
-| v0.4 | Coldgate native, OpenTelemetry, and OpenAI trace adapters, outside the evaluator boundary. |
 | v0.5 | Policy diff. First spike decidability for restricted grammar and v0.3 additions; label a heuristic result as heuristic if exact containment is not viable. |
 | v0.6 | CI integration. Hosted runners use only redacted or synthetic traces; real unredacted traces require self-hosted runners. |
 | v0.7 | Policy authoring tests. |

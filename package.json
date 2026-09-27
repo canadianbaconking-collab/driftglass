@@ -1,7 +1,7 @@
 {
   "name": "driftglass",
-  "version": "0.2.0",
-  "description": "Deterministic authority-policy replay and regression analysis",
+  "version": "0.3.0",
+  "description": "Deterministic scope-aware authority-policy replay and regression analysis",
   "type": "module",
   "bin": { "driftglass": "./bin/driftglass.js" },
   "exports": {

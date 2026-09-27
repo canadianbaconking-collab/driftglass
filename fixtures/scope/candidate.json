@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "default": "deny",
+  "rules": [
+    { "id": "write-repo", "allow": { "tool": "files.write", "effect": "WRITE", "resource": "repo/*" } },
+    { "id": "review-acme", "require_approval": { "tool": "files.write", "effect": "WRITE", "resource_scope": { "schema_version": 1, "state": "known", "anchor": "tenants/acme", "relation": "descendant" } } },
+    { "id": "allow-project-child", "allow": { "tool": "files.write", "effect": "WRITE", "resource_scope": { "schema_version": 1, "state": "known", "anchor": "tenants/acme/projects/app", "relation": "child" } } },
+    { "id": "deny-secrets", "deny": { "tool": "files.write", "resource_scope": { "schema_version": 1, "state": "known", "anchor": "tenants/acme/projects/app/secrets", "relation": "self_or_descendant" } } },
+    { "id": "deny-unresolved", "deny": { "tool": "files.write", "resource_scope": { "schema_version": 1, "state": "unknown" } } }
+  ]
+}

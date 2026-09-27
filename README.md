@@ -2,7 +2,7 @@
 
 Driftglass evaluates a normalized authority event against a versioned policy and explains which rule determined the decision. It is the replay kernel for testing changes to an AI agent's authority before those changes reach a live workflow. Its design began as PolicyReplay; the original preimplementation spec is retained in `docs/`.
 
-**Status:** v0.2 bulk replay and historical regression reporting against synthetic JSON traces. Real trace adapters, semantic policy diff, and live enforcement are later milestones.
+**Status:** v0.3 scope-aware replay and historical regression reporting against synthetic JSON traces. Real trace adapters, semantic policy diff, and live enforcement are later milestones.
 
 ## Quick start
 
@@ -12,10 +12,11 @@ Requires Node.js 20 or newer. No runtime dependencies or install step are needed
 node bin/driftglass.js evaluate examples/policy.json examples/event.json
 node bin/driftglass.js replay fixtures/bookshop/candidate.json fixtures/bookshop/traces
 node bin/driftglass.js compare fixtures/bookshop/baseline.json fixtures/bookshop/candidate.json fixtures/bookshop/traces
+node bin/driftglass.js compare fixtures/scope/baseline.json fixtures/scope/candidate.json fixtures/scope/traces
 npm run check
 ```
 
-The `compare` example reports three regressions: a new shipping deny, a refund requiring approval, and an inventory action falling through to default deny. It also reports a newly allowed notification and a default deny becoming an explicit deny. Append `--json` to `replay` or `compare` for the complete machine-readable report.
+The bookshop `compare` example reports three regressions: a new shipping deny, a refund requiring approval, and an inventory action falling through to default deny. The scope example reports four regressions from narrowing authority under `tenants/acme` and denying unknown scope. Append `--json` to `replay` or `compare` for the complete machine-readable report.
 
 Exit codes: `0` means no nonpassing event (`evaluate`/`replay`) or no regression (`compare`); `2` means at least one deny or approval (`evaluate`/`replay`) or at least one newly nonpassing event (`compare`); `1` means invalid input or usage. Until approval evidence is defined in v0.8, approval never counts as an automated pass. A `DENY` → `REQUIRE_APPROVAL` transition is newly approved but is **not** restored.
 
@@ -50,7 +51,11 @@ Each `.json` file in a trace directory (including nested directories) is one tra
 }
 ```
 
-An individual trace may have no events, but the whole corpus must contain at least one. Unknown fields in traces, events, or policies fail the run. `comparePolicies(baseline, candidate, traces)` is a pure API that validates the entire corpus before comparison. The directory reader is a separate I/O adapter; v0.2 intentionally supports synthetic JSON traces only.
+An individual trace may have no events, but the whole corpus must contain at least one. Unknown fields in traces, events, or policies fail the run. `comparePolicies(baseline, candidate, traces)` is a pure API that validates the entire corpus before comparison. The directory reader is a separate I/O adapter; current examples use synthetic normalized JSON traces. Real source adapters follow in v0.4.
+
+## v0.3 resource scope
+
+Rules may add `resource_scope` with a literal anchor and a `self`, `child`, `descendant`, or `self_or_descendant` relationship. Events may supply a normalized scope path or mark it unknown. A missing scope also counts as unknown to **new scope rules**. An explicit `deny` or `require_approval` rule can match unknown scope; an unknown-scope `allow` fails policy loading. The separate v0.1 `resource` field keeps its original exact and one-segment wildcard behavior. See [the scope contract](docs/SCOPE_V0.3.md) for complete schemas, precedence, path validation, and the distinction between missing and normalized scope.
 
 The comparison counts newly allowed, denied, approved, and unchanged **final decisions**. It separately records passing-to-nonpassing regressions, restored events, default-to-rule and rule-to-default coverage changes, and winning-rule reassignments. A decision can be unchanged while its coverage or winning rule changes; those events appear in the detailed output. Each change retains the event, both final decisions, `MATCHED`/`UNMATCHED`, source, and winning rule IDs. The corpus is evaluated against both policies without changing either policy or the events.
 
@@ -91,6 +96,6 @@ npm run benchmark
 
 The 50 authored decisions in `fixtures/v0.1.json` remain the compatibility gate. The deterministic benchmark replays 10,000 events across 200 traces against 200 rules, prints CPU/runtime details and timing, and uploads its JSON report in CI. Its target is under 1 second; CI currently **records** the result without using elapsed time as a release gate while runner variance is assessed. The boundary script enforces the current import and ambient-state rules; it is a lightweight static check, not a general proof of JavaScript purity.
 
-The evaluator trusts the supplied event. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical authority decisions; it does not intercept or enforce live agent actions in v0.2.
+The evaluator trusts the supplied event, including any normalized scope path. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical authority decisions; it does not intercept or enforce live agent actions in v0.3.
 
 See [PROJECT_STATE.md](PROJECT_STATE.md) for the roadmap and [docs/PREIMPLEMENTATION_SPEC.md](docs/PREIMPLEMENTATION_SPEC.md) for the design contract.
