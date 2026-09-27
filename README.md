@@ -2,7 +2,7 @@
 
 Driftglass evaluates a normalized authority event against a versioned policy and explains which rule determined the decision. It is the replay kernel for testing changes to an AI agent's authority before those changes reach a live workflow. Its design began as PolicyReplay; the original preimplementation spec is retained in `docs/`.
 
-**Status:** v0.3 scope-aware replay and historical regression reporting against synthetic JSON traces. Real trace adapters, semantic policy diff, and live enforcement are later milestones.
+**Status:** v0.4 saved Coldgate, OTLP JSON, and OpenAI Agents Python trace adapters with explicit effects and reviewed scope mappings. Semantic policy diff and live enforcement are later milestones.
 
 ## Quick start
 
@@ -15,6 +15,14 @@ node bin/driftglass.js compare fixtures/bookshop/baseline.json fixtures/bookshop
 node bin/driftglass.js compare fixtures/scope/baseline.json fixtures/scope/candidate.json fixtures/scope/traces
 npm run check
 ```
+
+Adapt a saved single-trace export using an explicit effect/scope mapping:
+
+```bash
+node bin/driftglass.js adapt coldgate saved-report.json mapping.json > normalized-traces/run.json
+```
+
+See [the v0.4 adapter contract](docs/TRACE_ADAPTERS_V0.4.md) for source formats, mapping rules, and the limits of historical telemetry.
 
 The bookshop `compare` example reports three regressions: a new shipping deny, a refund requiring approval, and an inventory action falling through to default deny. The scope example reports four regressions from narrowing authority under `tenants/acme` and denying unknown scope. Append `--json` to `replay` or `compare` for the complete machine-readable report.
 
@@ -51,7 +59,7 @@ Each `.json` file in a trace directory (including nested directories) is one tra
 }
 ```
 
-An individual trace may have no events, but the whole corpus must contain at least one. Unknown fields in traces, events, or policies fail the run. `comparePolicies(baseline, candidate, traces)` is a pure API that validates the entire corpus before comparison. The directory reader is a separate I/O adapter; current examples use synthetic normalized JSON traces. Real source adapters follow in v0.4.
+An individual trace may have no events, but the whole corpus must contain at least one. Unknown fields in traces, events, or policies fail the run. `comparePolicies(baseline, candidate, traces)` is a pure API that validates the entire corpus before comparison. The directory reader is a separate I/O adapter; the fixture corpus remains synthetic; v0.4 adapters accept saved traces with explicit mappings.
 
 ## v0.3 resource scope
 
@@ -96,6 +104,6 @@ npm run benchmark
 
 The 50 authored decisions in `fixtures/v0.1.json` remain the compatibility gate. The deterministic benchmark replays 10,000 events across 200 traces against 200 rules, prints CPU/runtime details and timing, and uploads its JSON report in CI. Its target is under 1 second; CI currently **records** the result without using elapsed time as a release gate while runner variance is assessed. The boundary script enforces the current import and ambient-state rules; it is a lightweight static check, not a general proof of JavaScript purity.
 
-The evaluator trusts the supplied event, including any normalized scope path. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical authority decisions; it does not intercept or enforce live agent actions in v0.3.
+The evaluator trusts the supplied event, including any normalized scope path. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical authority decisions; it does not intercept or enforce live agent actions in v0.4.
 
 See [PROJECT_STATE.md](PROJECT_STATE.md) for the roadmap and [docs/PREIMPLEMENTATION_SPEC.md](docs/PREIMPLEMENTATION_SPEC.md) for the design contract.

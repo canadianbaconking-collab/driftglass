@@ -3,8 +3,9 @@ import { readFile } from 'node:fs/promises';
 import { evaluate, passesAutomation } from '../src/kernel/index.js';
 import { replayTraces, comparePolicies } from '../src/replay/index.js';
 import { readTraceDirectory } from '../src/adapter/json-directory.js';
+import { adaptSourceTrace } from '../src/adapter/source-traces.js';
 
-const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]';
+const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
 const [command, ...input] = process.argv.slice(2);
 const json = input.at(-1) === '--json';
 if (json) input.pop();
@@ -32,7 +33,12 @@ function printComparison(result) {
 }
 
 try {
-  if (command === 'evaluate' && input.length === 2 && !json) {
+  if (command === 'adapt' && input.length === 3 && !json) {
+    const [source, mapping] = await Promise.all([readJSON(input[1]), readJSON(input[2])]);
+    const traces = adaptSourceTrace(input[0], source, mapping);
+    if (traces.length !== 1) throw new Error(`Source contains ${traces.length} traces; split it into single-trace exports before adapting`);
+    console.log(JSON.stringify({ schema_version: 1, events: traces[0].events }, null, 2));
+  } else if (command === 'evaluate' && input.length === 2 && !json) {
     const [policy, event] = await Promise.all(input.map(readJSON));
     const result = evaluate(policy, event);
     console.log(JSON.stringify(result, null, 2));

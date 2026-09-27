@@ -1,13 +1,14 @@
 {
   "name": "driftglass",
-  "version": "0.3.0",
-  "description": "Deterministic scope-aware authority-policy replay and regression analysis",
+  "version": "0.4.0",
+  "description": "Deterministic authority-policy replay with trace adapters",
   "type": "module",
   "bin": { "driftglass": "./bin/driftglass.js" },
   "exports": {
     ".": "./src/index.js",
     "./kernel": "./src/kernel/index.js",
-    "./replay": "./src/replay/index.js"
+    "./replay": "./src/replay/index.js",
+    "./adapter": "./src/adapter/source-traces.js"
   },
   "scripts": {
     "test": "node --test",

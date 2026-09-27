@@ -1,5 +1,11 @@
 # Driftglass project state
 
+## v0.4 — implementation complete
+
+- Added saved Coldgate native report, OTLP JSON, and OpenAI Agents Python span adapters outside the evaluator boundary. Effect maps are mandatory for each recognized capability action; observed resource labels become known hierarchy scopes only through a reviewed exact mapping. Missing evidence remains explicitly unknown.
+- Added `adapt` CLI and public adapter API, local JSON adapter contract, synthetic source-shape tests, and compatibility checks against v0.1 golden and v0.3 scope decisions. No prompts or tool arguments enter normalized output.
+- No real private trace was supplied for local comparison. Production-export compatibility remains unverified; hosted CI runs synthetic fixtures only.
+
 ## v0.3 — implementation complete
 
 - Added an optional, separately versioned `resource_scope` object to policies and events. Known paths support `self`, `child`, `descendant`, and `self_or_descendant` relationships with literal segments; missing and explicitly unknown event scope can be handled by explicit deny or approval rules. Unknown scope cannot be granted by a scope-specific allow rule.
@@ -28,10 +34,6 @@ Hosted CI for the v0.2 commit passed all 120 tests and uploaded the benchmark ar
 - Automated pass semantics treat `REQUIRE_APPROVAL` as denied until approval evidence exists at v0.8.
 
 Validation: `npm run check` passes 100 tests (including the 50 golden decisions), and the CLI example returns `ALLOW`. The GitHub `main` tree matches the tested source. The first hosted CI run ([Actions #36326317422](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36326317422)) completed successfully.
-
-## Next checkpoint: v0.4
-
-Build Coldgate native, OpenTelemetry, and OpenAI trace adapters on the caller side of the evaluator boundary. Normalize known scope paths only when the source provides enough evidence; mark unresolved resource scope unknown, reject unmapped effects, and test adapter output against the v0.1 and v0.3 fixtures. Compare real sanitized traces locally without sending unredacted data to hosted CI.
 
 ## Subsequent milestones
 
