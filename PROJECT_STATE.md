@@ -7,7 +7,7 @@
 - Added synthetic scope policy and traces, CLI regression demonstration, strict schema and precedence tests, and a normative [scope contract](docs/SCOPE_V0.3.md). The 50 v0.1 golden decisions and outputs remain unchanged with optional scope input.
 - 156 local tests pass. The 10,000-event / 200-rule benchmark remains below the one-second target (199.52 ms median in the latest local Node 24 Linux run); CI continues to record timing without gating on it.
 
-Hosted CI for the v0.3 commit will be recorded after publication. Scope paths are trusted normalized inputs; real provider normalization remains v0.4 work.
+Hosted CI for the v0.3 commit passed all 156 tests and uploaded the benchmark artifact ([run #36339264665](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36339264665)). Its Node 22 median was 56.99 ms, under the one-second target. Scope paths are trusted normalized inputs; real provider normalization remains v0.4 work.
 
 ## v0.2 — implementation complete
 
