@@ -8,7 +8,7 @@
 - Pure replay module and extended import/ambient-state boundary. The v0.1 golden corpus remains in the test suite.
 - 120 local tests pass. The deterministic benchmark replays 10,000 events from 200 traces against 200 rules; on a Linux Node 24 host (Xeon E5-2673 v4), the observed median was 130.22 ms. GitHub CI records and uploads timing plus hardware/runtime metadata. The under-1-second target is currently observational while runner variance is assessed.
 
-Hosted CI for the v0.2 commit will be recorded after publication.
+Hosted CI for the v0.2 commit passed all 120 tests and uploaded the benchmark artifact ([run #36332260351](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36332260351)). Its Node 22 median was 50.54 ms, under the 1-second target. The timing remains observational until runner variance is assessed.
 
 ## v0.1 — published on `main`
 
