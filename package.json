@@ -1,14 +1,15 @@
 {
   "name": "driftglass",
-  "version": "0.4.0",
-  "description": "Deterministic authority-policy replay with trace adapters",
+  "version": "0.5.0",
+  "description": "Deterministic authority-policy replay and exact policy diff",
   "type": "module",
   "bin": { "driftglass": "./bin/driftglass.js" },
   "exports": {
     ".": "./src/index.js",
     "./kernel": "./src/kernel/index.js",
     "./replay": "./src/replay/index.js",
-    "./adapter": "./src/adapter/source-traces.js"
+    "./adapter": "./src/adapter/source-traces.js",
+    "./diff": "./src/diff/index.js"
   },
   "scripts": {
     "test": "node --test",

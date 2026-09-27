@@ -1,5 +1,11 @@
 # Driftglass project state
 
+## v0.5 — implementation complete
+
+- Exact semantic policy diff over the shipped restricted schema 1 rule grammar. Finite representative partitions cover exact tool/actor/effect values, terminal one-segment legacy patterns, v0.3 known/unknown scope relationships, and defaults. The comparator calls the existing evaluator and supplies real witness events for newly allowed/nonpassing/approved/denied decisions, coverage changes, and rule reassignments.
+- The scope fixture reveals `mixed` authority: a candidate scoped child rule grants WRITE when the old required `repo/*` legacy resource is missing. This widening did not occur in the fixture trace corpus; historical compare remains accurate for those recorded events.
+- `driftglass diff` and `diffPolicies` expose the result. A finite analysis budget fails without an exactness claim or partial output. See [the proof and limits](docs/POLICY_DIFF_V0.5.md).
+
 ## v0.4 — implementation complete
 
 - Added saved Coldgate native report, OTLP JSON, and OpenAI Agents Python span adapters outside the evaluator boundary. Effect maps are mandatory for each recognized capability action; observed resource labels become known hierarchy scopes only through a reviewed exact mapping. Missing evidence remains explicitly unknown.
@@ -41,7 +47,6 @@ Validation: `npm run check` passes 100 tests (including the 50 golden decisions)
 
 | Version | Planned scope |
 | --- | --- |
-| v0.5 | Policy diff. First spike decidability for restricted grammar and v0.3 additions; label a heuristic result as heuristic if exact containment is not viable. |
 | v0.6 | CI integration. Hosted runners use only redacted or synthetic traces; real unredacted traces require self-hosted runners. |
 | v0.7 | Policy authoring tests. |
 | v0.8 | Approval evidence and provenance. |

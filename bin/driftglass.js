@@ -4,8 +4,9 @@ import { evaluate, passesAutomation } from '../src/kernel/index.js';
 import { replayTraces, comparePolicies } from '../src/replay/index.js';
 import { readTraceDirectory } from '../src/adapter/json-directory.js';
 import { adaptSourceTrace } from '../src/adapter/source-traces.js';
+import { diffPolicies } from '../src/diff/index.js';
 
-const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
+const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass diff <baseline.json> <candidate.json> [--json]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
 const [command, ...input] = process.argv.slice(2);
 const json = input.at(-1) === '--json';
 if (json) input.pop();
@@ -59,6 +60,19 @@ try {
     if (json) console.log(JSON.stringify(result, null, 2));
     else printComparison(result);
     process.exitCode = result.summary.regressions ? 2 : 0;
+  } else if (command === 'diff' && input.length === 2) {
+    const [baseline, candidate] = await Promise.all(input.map(readJSON));
+    const result = diffPolicies(baseline, candidate);
+    if (json) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log(`Authority: ${result.authority} (${result.method}; ${result.representative_cells} representative cells)`);
+      console.log(`Decisions equal: ${result.decisions_equal}`);
+      for (const [type, count] of Object.entries(result.categories)) if (count) {
+        const witness = result.witnesses[type];
+        console.log(`${type}: ${count} cells; example ${JSON.stringify(witness.event)} (${witness.baseline.decision} -> ${witness.candidate.decision})`);
+      }
+    }
+    process.exitCode = result.categories.newly_allowed ? 2 : 0;
   } else {
     console.error(usage);
     process.exitCode = 1;

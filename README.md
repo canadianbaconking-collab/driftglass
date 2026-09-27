@@ -2,7 +2,7 @@
 
 Driftglass evaluates a normalized authority event against a versioned policy and explains which rule determined the decision. It is the replay kernel for testing changes to an AI agent's authority before those changes reach a live workflow. Its design began as PolicyReplay; the original preimplementation spec is retained in `docs/`.
 
-**Status:** v0.4 saved Coldgate, OTLP JSON, and OpenAI Agents Python trace adapters with explicit effects and reviewed scope mappings. Semantic policy diff and live enforcement are later milestones.
+**Status:** v0.5 exact policy diff for the current restricted grammar, historical replay, and saved Coldgate, OTLP JSON, and OpenAI Agents Python trace adapters. Live enforcement is a later milestone.
 
 ## Quick start
 
@@ -13,6 +13,7 @@ node bin/driftglass.js evaluate examples/policy.json examples/event.json
 node bin/driftglass.js replay fixtures/bookshop/candidate.json fixtures/bookshop/traces
 node bin/driftglass.js compare fixtures/bookshop/baseline.json fixtures/bookshop/candidate.json fixtures/bookshop/traces
 node bin/driftglass.js compare fixtures/scope/baseline.json fixtures/scope/candidate.json fixtures/scope/traces
+node bin/driftglass.js diff fixtures/scope/baseline.json fixtures/scope/candidate.json
 npm run check
 ```
 
@@ -24,6 +25,8 @@ node bin/driftglass.js adapt coldgate saved-report.json mapping.json > normalize
 
 See [the v0.4 adapter contract](docs/TRACE_ADAPTERS_V0.4.md) for source formats, mapping rules, and the limits of historical telemetry.
 
+The new [policy diff contract](docs/POLICY_DIFF_V0.5.md) compares authority for every valid event in the restricted grammar and gives concrete witnesses. It exits `2` when candidate policy authority widens, `0` otherwise, and `1` for invalid or incomplete analysis. The scope fixture reveals both narrowing and an unrecorded widening: the candidate allows a scoped child without the legacy `resource` that the baseline required.
+
 The bookshop `compare` example reports three regressions: a new shipping deny, a refund requiring approval, and an inventory action falling through to default deny. The scope example reports four regressions from narrowing authority under `tenants/acme` and denying unknown scope. Append `--json` to `replay` or `compare` for the complete machine-readable report.
 
 Exit codes: `0` means no nonpassing event (`evaluate`/`replay`) or no regression (`compare`); `2` means at least one deny or approval (`evaluate`/`replay`) or at least one newly nonpassing event (`compare`); `1` means invalid input or usage. Until approval evidence is defined in v0.8, approval never counts as an automated pass. A `DENY` → `REQUIRE_APPROVAL` transition is newly approved but is **not** restored.
@@ -31,7 +34,7 @@ Exit codes: `0` means no nonpassing event (`evaluate`/`replay`) or no regression
 For direct use:
 
 ```js
-import { loadPolicy, evaluate, comparePolicies, passesAutomation } from './src/index.js';
+import { loadPolicy, evaluate, comparePolicies, diffPolicies, passesAutomation } from './src/index.js';
 import policy from './examples/policy.json' with { type: 'json' };
 
 const compiled = loadPolicy(policy);
@@ -104,6 +107,6 @@ npm run benchmark
 
 The 50 authored decisions in `fixtures/v0.1.json` remain the compatibility gate. The deterministic benchmark replays 10,000 events across 200 traces against 200 rules, prints CPU/runtime details and timing, and uploads its JSON report in CI. Its target is under 1 second; CI currently **records** the result without using elapsed time as a release gate while runner variance is assessed. The boundary script enforces the current import and ambient-state rules; it is a lightweight static check, not a general proof of JavaScript purity.
 
-The evaluator trusts the supplied event, including any normalized scope path. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical authority decisions; it does not intercept or enforce live agent actions in v0.4.
+The evaluator trusts the supplied event, including any normalized scope path. It cannot detect omitted or altered actions in a self-reported trace. Driftglass evaluates historical and hypothetical authority decisions; it does not intercept or enforce live agent actions in v0.5.
 
 See [PROJECT_STATE.md](PROJECT_STATE.md) for the roadmap and [docs/PREIMPLEMENTATION_SPEC.md](docs/PREIMPLEMENTATION_SPEC.md) for the design contract.
