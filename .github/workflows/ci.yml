@@ -11,3 +11,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm run check
+      - run: node scripts/benchmark.js benchmark.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: driftglass-benchmark
+          path: benchmark.json

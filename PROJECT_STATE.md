@@ -1,5 +1,15 @@
 # Driftglass project state
 
+## v0.2 — implementation complete
+
+- Recursive, stable JSON trace-directory reader. Each file is one trace; nested relative paths identify runs. Symlinks and invalid corpora fail the run.
+- Single-policy bulk replay and baseline-versus-candidate impact analysis, with decision transitions, regressions, restorations, source/coverage changes, and winning-rule reassignments. Approval remains nonpassing for automation.
+- Human and JSON CLI reports. The separate synthetic bookshop corpus exercises denials, approval requirements, restored access, and coverage drift. A generator produces 200 trace files for an end-to-end demonstration.
+- Pure replay module and extended import/ambient-state boundary. The v0.1 golden corpus remains in the test suite.
+- 120 local tests pass. The deterministic benchmark replays 10,000 events from 200 traces against 200 rules; on a Linux Node 24 host (Xeon E5-2673 v4), the observed median was 130.22 ms. GitHub CI records and uploads timing plus hardware/runtime metadata. The under-1-second target is currently observational while runner variance is assessed.
+
+Hosted CI for the v0.2 commit will be recorded after publication.
+
 ## v0.1 — published on `main`
 
 - Strict schema version 1 loaders for policy, rule, constraints, and event, including UTC timestamp validation and stable IDs.
@@ -10,15 +20,14 @@
 
 Validation: `npm run check` passes 100 tests (including the 50 golden decisions), and the CLI example returns `ALLOW`. The GitHub `main` tree matches the tested source. The first hosted CI run ([Actions #36326317422](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36326317422)) completed successfully.
 
-## Next checkpoint: v0.2
+## Next checkpoint: v0.3
 
-Replay directories of synthetic traces under both old and candidate policies. Summarize newly denied, newly approved, newly allowed, and unchanged events, preserving rule/default and match-state distinctions. Add the 10,000-event / 200-rule performance harness with hardware and runtime metadata; use the v0.1 corpus as a release compatibility gate. Validate the end-to-end regression report with an unrelated synthetic project before adding real adapters.
+Add resource narrowing and relationships, explicit unknown-resource handling, and versioned richer scope syntax only where the v0.1 grammar cannot represent a needed relationship. Preserve the v0.1 fixture decisions and the evaluator's I/O boundary. Real trace adapters follow in v0.4.
 
 ## Subsequent milestones
 
 | Version | Planned scope |
 | --- | --- |
-| v0.3 | Resource narrowing and relationships, explicit unknown-resource handling, versioned richer pattern semantics if justified. |
 | v0.4 | Coldgate native, OpenTelemetry, and OpenAI trace adapters, outside the evaluator boundary. |
 | v0.5 | Policy diff. First spike decidability for restricted grammar and v0.3 additions; label a heuristic result as heuristic if exact containment is not viable. |
 | v0.6 | CI integration. Hosted runners use only redacted or synthetic traces; real unredacted traces require self-hosted runners. |

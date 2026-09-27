@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "events": [
+    { "schema_version": 1, "tool": "shipping.create", "effect": "WRITE", "resource": "orders/high-risk" },
+    { "schema_version": 1, "tool": "payments.refund", "effect": "SEND", "resource": "orders/vip" },
+    { "schema_version": 1, "tool": "inventory.adjust", "effect": "WRITE", "resource": "inventory/stockroom" },
+    { "schema_version": 1, "tool": "support.notify", "effect": "SEND", "destination": "customers/premium" }
+  ]
+}

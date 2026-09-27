@@ -86,6 +86,7 @@ function normalizeConstraints(value, path) {
 
 /** Validate and snapshot a policy. A malformed or ambiguous policy never loads. */
 export function loadPolicy(value) {
+  if (value?.[COMPILED] === true) return value;
   record(value, 'policy', ['schema_version', 'default', 'rules'], ['schema_version', 'default', 'rules']);
   if (value.schema_version !== 1) fail('policy.schema_version', 'expected 1');
   if (value.default !== 'allow' && value.default !== 'deny') fail('policy.default', 'expected allow or deny');
@@ -119,9 +120,13 @@ export function loadPolicy(value) {
       }
     }
   }
+  const snapshot = Object.freeze(rules.map((r) => Object.freeze({ ...r,
+    specificity: Object.freeze(r.specificity), constraints: Object.freeze(r.constraints) })));
+  const rulesByTool = Object.create(null);
+  for (const rule of snapshot) (rulesByTool[rule.constraints.tool] ??= []).push(rule);
+  for (const tool of Object.keys(rulesByTool)) Object.freeze(rulesByTool[tool]);
   return Object.freeze({ schema_version: 1, default: value.default, [COMPILED]: true,
-    rules: Object.freeze(rules.map((r) => Object.freeze({ ...r,
-      specificity: Object.freeze(r.specificity), constraints: Object.freeze(r.constraints) }))) });
+    rules: snapshot, rulesByTool: Object.freeze(rulesByTool) });
 }
 
 function validTimestamp(value) {
@@ -165,13 +170,14 @@ function differences(constraints, event) {
 export function evaluate(policyInput, eventInput) {
   const policy = policyInput?.[COMPILED] === true ? policyInput : loadPolicy(policyInput);
   const event = loadEvent(eventInput);
-  const inspected = policy.rules.map((rule) => ({ rule, reasons: differences(rule.constraints, event) }));
-  const matched = inspected.filter(({ reasons }) => reasons.length === 0).map(({ rule }) => rule);
+  const matched = (policy.rulesByTool[event.tool] ?? [])
+    .filter((rule) => differences(rule.constraints, event).length === 0);
   const matching_rule_ids = matched.map((r) => r.id).sort(alphabetic);
   if (matched.length === 0) {
     const result = { match_state: 'UNMATCHED', decision: policy.default.toUpperCase(),
       source: 'default', matching_rule_ids, winning_rule_ids: [], specificity: null };
-    if (policy.default === 'deny') result.non_matching_higher_priority = inspected
+    if (policy.default === 'deny') result.non_matching_higher_priority = policy.rules
+      .map((rule) => ({ rule, reasons: differences(rule.constraints, event) }))
       .map(({ rule, reasons }) => ({ id: rule.id, specificity: [...rule.specificity], reasons }))
       .sort((a, b) => alphabetic(a.id, b.id));
     return result;
@@ -187,7 +193,8 @@ export function evaluate(policyInput, eventInput) {
       .sort((a, b) => alphabetic(a.id, b.id));
   }
   if (decision !== 'ALLOW') {
-    result.non_matching_higher_priority = inspected.filter(({ rule, reasons }) => reasons.length &&
+    result.non_matching_higher_priority = policy.rules.map((rule) => ({ rule, reasons: differences(rule.constraints, event) }))
+      .filter(({ rule, reasons }) => reasons.length &&
       (rule.outcome === 'deny' || (decision !== 'DENY' && compare(rule.specificity, winners[0].specificity) >= 0)))
       .map(({ rule, reasons }) => ({ id: rule.id, specificity: [...rule.specificity], reasons }))
       .sort((a, b) => alphabetic(a.id, b.id));

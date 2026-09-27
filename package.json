@@ -1,12 +1,17 @@
 {
   "name": "driftglass",
-  "version": "0.1.0",
-  "description": "Deterministic authority-policy replay kernel",
+  "version": "0.2.0",
+  "description": "Deterministic authority-policy replay and regression analysis",
   "type": "module",
   "bin": { "driftglass": "./bin/driftglass.js" },
-  "exports": { ".": "./src/kernel/index.js" },
+  "exports": {
+    ".": "./src/index.js",
+    "./kernel": "./src/kernel/index.js",
+    "./replay": "./src/replay/index.js"
+  },
   "scripts": {
     "test": "node --test",
+    "benchmark": "node scripts/benchmark.js",
     "check:boundary": "node scripts/check-boundary.js",
     "check": "npm run check:boundary && npm test"
   },

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "default": "deny",
+  "rules": [
+    { "id": "catalog", "allow": { "tool": "catalog.read", "effect": "READ", "resource": "books/*" } },
+    { "id": "shipping", "allow": { "tool": "shipping.create", "effect": "WRITE", "resource": "orders/*" } },
+    { "id": "refund", "allow": { "tool": "payments.refund", "effect": "SEND", "resource": "orders/*" } },
+    { "id": "vip-deny", "deny": { "tool": "payments.refund", "resource": "orders/vip" } },
+    { "id": "inventory", "allow": { "tool": "inventory.adjust", "effect": "WRITE", "resource": "inventory/*" } }
+  ]
+}
