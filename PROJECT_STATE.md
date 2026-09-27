@@ -1,12 +1,14 @@
 # Driftglass project state
 
-## v0.1 — implemented locally
+## v0.1 — published on `main`
 
 - Strict schema version 1 loaders for policy, rule, constraints, and event, including UTC timestamp validation and stable IDs.
 - Exact and one-segment terminal wildcard matching, deny precedence, lexicographic specificity, load-time ambiguity rejection, default coverage gaps, and decision explanations.
 - Pure evaluator module with a CI-checked import/ambient-state boundary; file I/O resides in the CLI.
 - 50 authored golden decisions plus invalid-input, ordering, explanation, and snapshot tests. Node 20+ dependency-free package and CI workflow.
 - Automated pass semantics treat `REQUIRE_APPROVAL` as denied until approval evidence exists at v0.8.
+
+Validation: `npm run check` passes 100 tests (including the 50 golden decisions), and the CLI example returns `ALLOW`. The GitHub `main` tree matches the tested source. The first hosted CI run ([Actions #36326317422](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36326317422)) completed successfully.
 
 ## Next checkpoint: v0.2
 
