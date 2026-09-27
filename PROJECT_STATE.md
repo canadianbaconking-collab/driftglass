@@ -6,6 +6,8 @@
 - The scope fixture reveals `mixed` authority: a candidate scoped child rule grants WRITE when the old required `repo/*` legacy resource is missing. This widening did not occur in the fixture trace corpus; historical compare remains accurate for those recorded events.
 - `driftglass diff` and `diffPolicies` expose the result. A finite analysis budget fails without an exactness claim or partial output. See [the proof and limits](docs/POLICY_DIFF_V0.5.md).
 
+Hosted CI for v0.5 passed all 174 tests and uploaded the replay benchmark artifact ([run #36352858789](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36352858789)). The local 200-rule exact-diff smoke comparison completed in 9,600 representative cells; performance is not a release gate for policy diff.
+
 ## v0.4 — implementation complete
 
 - Added saved Coldgate native report, OTLP JSON, and OpenAI Agents Python span adapters outside the evaluator boundary. Effect maps are mandatory for each recognized capability action; observed resource labels become known hierarchy scopes only through a reviewed exact mapping. Missing evidence remains explicitly unknown.
