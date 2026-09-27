@@ -6,6 +6,8 @@
 - Added `adapt` CLI and public adapter API, local JSON adapter contract, synthetic source-shape tests, and compatibility checks against v0.1 golden and v0.3 scope decisions. No prompts or tool arguments enter normalized output.
 - No real private trace was supplied for local comparison. Production-export compatibility remains unverified; hosted CI runs synthetic fixtures only.
 
+Hosted CI for v0.4 passed all 164 tests and uploaded the benchmark artifact ([run #36349338478](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36349338478)). Coldgate's public synthetic exports also imported locally through both source and native report paths. No private production traces were supplied for verification.
+
 ## v0.3 — implementation complete
 
 - Added an optional, separately versioned `resource_scope` object to policies and events. Known paths support `self`, `child`, `descendant`, and `self_or_descendant` relationships with literal segments; missing and explicitly unknown event scope can be handled by explicit deny or approval rules. Unknown scope cannot be granted by a scope-specific allow rule.
