@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "default": "deny",
+  "rules": [
+    { "id": "allow-repo-push", "allow": { "tool": "github.push_files", "resource": "canadianbaconking-collab/*" } },
+    { "id": "deny-secrets-push", "deny": { "tool": "github.push_files", "resource": "canadianbaconking-collab/driftglass-secrets" } }
+  ]
+}
