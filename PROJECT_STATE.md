@@ -1,10 +1,10 @@
 # Driftglass project state
 
-## v0.7 — implementation complete; hosted CI pending
+## v0.7 — implementation complete
 
 - Added strict, versioned declarative policy suites with required decision and optional source, match state, matching IDs, and winning IDs. `testPolicy` validates the full policy and suite, then returns per-case assertion results. Expected approvals can satisfy assertions while remaining nonpassing for automated authority.
 - Added `driftglass policy test`, local mismatch diagnostics, JSON output, counts-only CI summary, and exit codes `0` pass, `2` assertion failure, `1` invalid input. The composite action accepts an optional candidate `test-suite` and stops on failure before its existing historical and exact-diff gates.
-- Added a five-case bookshop suite covering wildcard allowance, explicit deny precedence, and uncovered defaults; the checked-in hosted workflow invokes it. Local `npm run check` passes 183 tests (including 50 original golden decisions). The 10,000-event, 200-rule benchmark median was 44.96 ms on Node 24 Linux. Hosted workflow verification is pending publication.
+- Added a five-case bookshop suite covering wildcard allowance, explicit deny precedence, and uncovered defaults; the checked-in hosted workflow invokes it. Local `npm run check` passes 183 tests (including 50 original golden decisions). The 10,000-event, 200-rule benchmark median was 44.96 ms on Node 24 Linux. Hosted [CI run #36450976481](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36450976481) passed the suite and composite action smoke check.
 
 ## v0.6 — implementation complete
 
