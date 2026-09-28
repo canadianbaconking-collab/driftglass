@@ -2,7 +2,7 @@
 
 Driftglass evaluates a normalized authority event against a versioned policy and explains which rule determined the decision. It is the replay kernel for testing changes to an AI agent's authority before those changes reach a live workflow. Its design began as PolicyReplay; the original preimplementation spec is retained in `docs/`.
 
-**Status:** v0.5 exact policy diff for the current restricted grammar, historical replay, and saved Coldgate, OTLP JSON, and OpenAI Agents Python trace adapters. Live enforcement is a later milestone.
+**Status:** v0.6 CI gate combining historical regressions and exact policy widening, with a composite GitHub Action. Historical replay, policy diff, and saved Coldgate, OTLP JSON, and OpenAI Agents Python trace adapters are available. Live enforcement is a later milestone.
 
 ## Quick start
 
@@ -14,6 +14,7 @@ node bin/driftglass.js replay fixtures/bookshop/candidate.json fixtures/bookshop
 node bin/driftglass.js compare fixtures/bookshop/baseline.json fixtures/bookshop/candidate.json fixtures/bookshop/traces
 node bin/driftglass.js compare fixtures/scope/baseline.json fixtures/scope/candidate.json fixtures/scope/traces
 node bin/driftglass.js diff fixtures/scope/baseline.json fixtures/scope/candidate.json
+node bin/driftglass.js ci fixtures/bookshop/baseline.json fixtures/bookshop/baseline.json fixtures/bookshop/traces
 npm run check
 ```
 
@@ -26,6 +27,8 @@ node bin/driftglass.js adapt coldgate saved-report.json mapping.json > normalize
 See [the v0.4 adapter contract](docs/TRACE_ADAPTERS_V0.4.md) for source formats, mapping rules, and the limits of historical telemetry.
 
 The new [policy diff contract](docs/POLICY_DIFF_V0.5.md) compares authority for every valid event in the restricted grammar and gives concrete witnesses. It exits `2` when candidate policy authority widens, `0` otherwise, and `1` for invalid or incomplete analysis. The scope fixture reveals both narrowing and an unrecorded widening: the candidate allows a scoped child without the legacy `resource` that the baseline required.
+
+The [v0.6 CI gate](docs/CI_V0.6.md) combines historical pass-to-block regressions with exact newly allowed authority. `driftglass ci` and the composite GitHub Action block on either result, fail closed on invalid or incomplete analysis, and print a counts-only summary. Hosted runners use only redacted or synthetic traces; unredacted real traces require a self-hosted runner. Full event reports are opt-in.
 
 The bookshop `compare` example reports three regressions: a new shipping deny, a refund requiring approval, and an inventory action falling through to default deny. The scope example reports four regressions from narrowing authority under `tenants/acme` and denying unknown scope. Append `--json` to `replay` or `compare` for the complete machine-readable report.
 

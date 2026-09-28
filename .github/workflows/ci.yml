@@ -11,6 +11,12 @@ jobs:
         with:
           node-version: '22'
       - run: npm run check
+      - name: Smoke test composite action with synthetic corpus
+        uses: ./
+        with:
+          baseline: fixtures/bookshop/baseline.json
+          candidate: fixtures/bookshop/baseline.json
+          traces: fixtures/bookshop/traces
       - run: node scripts/benchmark.js benchmark.json
       - uses: actions/upload-artifact@v4
         with:

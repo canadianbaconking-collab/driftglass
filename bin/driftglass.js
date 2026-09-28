@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { evaluate, passesAutomation } from '../src/kernel/index.js';
 import { replayTraces, comparePolicies } from '../src/replay/index.js';
 import { readTraceDirectory } from '../src/adapter/json-directory.js';
 import { adaptSourceTrace } from '../src/adapter/source-traces.js';
 import { diffPolicies } from '../src/diff/index.js';
+import { assessPolicyChange, formatCISummary } from '../src/ci/index.js';
 
-const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass diff <baseline.json> <candidate.json> [--json]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
+const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass diff <baseline.json> <candidate.json> [--json]\n  driftglass ci <baseline.json> <candidate.json> <traces-dir> [--json] [--report <path>] [--summary <path>]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
 const [command, ...input] = process.argv.slice(2);
-const json = input.at(-1) === '--json';
-if (json) input.pop();
+const json = input.includes('--json');
+if (json) input.splice(input.indexOf('--json'), 1);
 
 async function readJSON(path) {
   try { return JSON.parse(await readFile(path, 'utf8')); }
@@ -60,6 +61,25 @@ try {
     if (json) console.log(JSON.stringify(result, null, 2));
     else printComparison(result);
     process.exitCode = result.summary.regressions ? 2 : 0;
+  } else if (command === 'ci') {
+    const args = input.splice(0, 3);
+    let reportPath, summaryPath;
+    while (input.length) {
+      const flag = input.shift();
+      if (!['--report', '--summary'].includes(flag) || !input.length || input[0].startsWith('--')) throw new Error(`Invalid ci option: ${flag}`);
+      const path = input.shift();
+      if (flag === '--report' && reportPath === undefined) reportPath = path;
+      else if (flag === '--summary' && summaryPath === undefined) summaryPath = path;
+      else throw new Error(`Duplicate ci option: ${flag}`);
+    }
+    if (args.length !== 3) throw new Error(usage);
+    const [baseline, candidate, traces] = await Promise.all([readJSON(args[0]), readJSON(args[1]), readTraceDirectory(args[2])]);
+    const report = assessPolicyChange(baseline, candidate, traces);
+    if (reportPath) await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+    if (summaryPath) await appendFile(summaryPath, formatCISummary(report));
+    if (json) console.log(JSON.stringify(report, null, 2));
+    else console.log(formatCISummary(report));
+    process.exitCode = report.gate.passed ? 0 : 2;
   } else if (command === 'diff' && input.length === 2) {
     const [baseline, candidate] = await Promise.all(input.map(readJSON));
     const result = diffPolicies(baseline, candidate);

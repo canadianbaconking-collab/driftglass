@@ -1,5 +1,11 @@
 # Driftglass project state
 
+## v0.6 — implementation complete; hosted action verification pending
+
+- Added `assessPolicyChange` and `driftglass ci`: the gate blocks on either historical pass-to-nonpass regression or exact newly allowed authority. Approval is nonpassing; invalid data and an unfinished diff fail without a pass.
+- Added composite `action.yml` with counts-only GitHub step summary and optional full JSON report. Hosted runners are documented for synthetic/redacted traces only; real unredacted traces require self-hosted runners. No report is uploaded by default.
+- The checked-in workflow invokes the action with an unchanged synthetic fixture pair. Local `npm run check` passes 178 tests, including CI gating, output privacy, CLI exit codes, and the 50 original v0.1 golden decisions. Hosted GitHub Action execution remains to be observed after pushing.
+
 ## v0.5 — implementation complete
 
 - Exact semantic policy diff over the shipped restricted schema 1 rule grammar. Finite representative partitions cover exact tool/actor/effect values, terminal one-segment legacy patterns, v0.3 known/unknown scope relationships, and defaults. The comparator calls the existing evaluator and supplies real witness events for newly allowed/nonpassing/approved/denied decisions, coverage changes, and rule reassignments.
@@ -49,7 +55,6 @@ Validation: `npm run check` passes 100 tests (including the 50 golden decisions)
 
 | Version | Planned scope |
 | --- | --- |
-| v0.6 | CI integration. Hosted runners use only redacted or synthetic traces; real unredacted traces require self-hosted runners. |
 | v0.7 | Policy authoring tests. |
 | v0.8 | Approval evidence and provenance. |
 | v0.9 | Candidate policy generation with coverage and corpus-confidence signals (days, actors, tools, thin evidence). |
