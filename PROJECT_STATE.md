@@ -1,10 +1,10 @@
 # Driftglass project state
 
-## v0.6 — implementation complete; hosted action verification pending
+## v0.6 — implementation complete
 
 - Added `assessPolicyChange` and `driftglass ci`: the gate blocks on either historical pass-to-nonpass regression or exact newly allowed authority. Approval is nonpassing; invalid data and an unfinished diff fail without a pass.
 - Added composite `action.yml` with counts-only GitHub step summary and optional full JSON report. Hosted runners are documented for synthetic/redacted traces only; real unredacted traces require self-hosted runners. No report is uploaded by default.
-- The checked-in workflow invokes the action with an unchanged synthetic fixture pair. Local `npm run check` passes 178 tests, including CI gating, output privacy, CLI exit codes, and the 50 original v0.1 golden decisions. Hosted GitHub Action execution remains to be observed after pushing.
+- The checked-in workflow invokes the action with an unchanged synthetic fixture pair. Local `npm run check` passes 178 tests, including CI gating, output privacy, CLI exit codes, and the 50 original v0.1 golden decisions. Hosted CI [run #36366866855](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36366866855) passed, including the composite action smoke check and benchmark artifact upload.
 
 ## v0.5 — implementation complete
 
