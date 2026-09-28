@@ -72,7 +72,7 @@ function normalizeRuleScope(value, path) {
   if (!has(value, 'anchor')) fail(`${path}.anchor`, 'required field');
   if (!has(value, 'relation')) fail(`${path}.relation`, 'required field');
   scopePath(value.anchor, `${path}.anchor`);
-  if (!has(SCOPE_RELATIONS, value.relation)) fail(`${path}.relation`, 'unknown relationship');
+  if (typeof value.relation !== 'string' || !has(SCOPE_RELATIONS, value.relation)) fail(`${path}.relation`, 'unknown relationship');
   return { schema_version: 1, state: 'known', anchor: value.anchor, relation: value.relation };
 }
 
@@ -85,7 +85,8 @@ function scopeMatches(scope, eventScope) {
   const distance = path.length - anchor.length;
   return scope.relation === 'self' ? distance === 0
     : scope.relation === 'child' ? distance === 1
-      : scope.relation === 'descendant' ? distance >= 1 : distance >= 0;
+      : scope.relation === 'descendant' ? distance >= 1
+        : scope.relation === 'self_or_descendant' ? distance >= 0 : false;
 }
 
 function scopeIntersects(a, b) {

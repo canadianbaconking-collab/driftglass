@@ -141,10 +141,16 @@ const badRules = [
   ['empty segment', scoped('tenant//app', 'child')],
   ['parent segment', scoped('tenant/../app', 'child')],
   ['unknown relationship', scoped('tenant', 'sibling')],
+  ...[['self'], ['child'], ['descendant'], ['self_or_descendant'], [], {}, null, 0, true]
+    .map(relation => [`non-string relationship ${JSON.stringify(relation)}`, scoped('tenant', relation)]),
   ['extra key', { ...scoped('tenant', 'child'), prefix: 'x' }]
 ];
 for (const [name, resource_scope] of badRules) {
-  test(`reject policy scope: ${name}`, () => assert.throws(() => loadPolicy(policy({ id: 'x', deny: { tool: 't', resource_scope } })), ValidationError));
+  test(`reject policy scope: ${name}`, () => {
+    for (const outcome of ['allow', 'deny', 'require_approval']) {
+      assert.throws(() => loadPolicy(policy({ id: 'x', [outcome]: { tool: 't', resource_scope } })), ValidationError);
+    }
+  });
 }
 
 test('unknown scope cannot grant authority', () => {

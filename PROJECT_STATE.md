@@ -1,5 +1,11 @@
 # Driftglass project state
 
+## Review hardening — 2026-09-28
+
+- Scope relationships must be primitive strings from the supported enum. Arrays and objects fail policy loading instead of coercing into valid property keys and later matching a broader scope. The matcher explicitly rejects unknown relationships.
+- Added malformed-relation regression cases for every outcome while retaining the existing scope matrix and golden decisions.
+- Directory tests retain all sorting assertions and isolate symlink validation in a subtest. Windows hosts lacking symlink permission report that subtest as skipped; Linux and capable Windows hosts still exercise rejection.
+
 ## v0.6 — implementation complete
 
 - Added `assessPolicyChange` and `driftglass ci`: the gate blocks on either historical pass-to-nonpass regression or exact newly allowed authority. Approval is nonpassing; invalid data and an unfinished diff fail without a pass.
