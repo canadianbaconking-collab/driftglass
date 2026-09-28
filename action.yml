@@ -10,6 +10,10 @@ inputs:
   traces:
     description: Directory of normalized trace JSON files
     required: true
+  test-suite:
+    description: Optional declarative policy tests run against the candidate before the regression and widening checks
+    required: false
+    default: ''
   report-path:
     description: Optional path for a full JSON report containing event values; keep it in a trusted location
     required: false
@@ -26,8 +30,12 @@ runs:
         DG_BASELINE: ${{ inputs.baseline }}
         DG_CANDIDATE: ${{ inputs.candidate }}
         DG_TRACES: ${{ inputs.traces }}
+        DG_SUITE: ${{ inputs.test-suite }}
         DG_REPORT: ${{ inputs.report-path }}
       run: |
+        if [[ -n "$DG_SUITE" ]]; then
+          node "$GITHUB_ACTION_PATH/bin/driftglass.js" policy test "$DG_CANDIDATE" "$DG_SUITE" --summary "$GITHUB_STEP_SUMMARY"
+        fi
         args=("$DG_BASELINE" "$DG_CANDIDATE" "$DG_TRACES" --summary "$GITHUB_STEP_SUMMARY")
         if [[ -n "$DG_REPORT" ]]; then args+=(--report "$DG_REPORT"); fi
         node "$GITHUB_ACTION_PATH/bin/driftglass.js" ci "${args[@]}"

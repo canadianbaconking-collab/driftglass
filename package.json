@@ -1,7 +1,7 @@
 {
   "name": "driftglass",
-  "version": "0.6.0",
-  "description": "Deterministic authority-policy replay and CI policy checks",
+  "version": "0.7.0",
+  "description": "Deterministic authority-policy replay and policy authoring tests",
   "type": "module",
   "bin": { "driftglass": "./bin/driftglass.js" },
   "exports": {
@@ -10,7 +10,8 @@
     "./replay": "./src/replay/index.js",
     "./adapter": "./src/adapter/source-traces.js",
     "./diff": "./src/diff/index.js",
-    "./ci": "./src/ci/index.js"
+    "./ci": "./src/ci/index.js",
+    "./policy-test": "./src/policy-test/index.js"
   },
   "scripts": {
     "test": "node --test",
