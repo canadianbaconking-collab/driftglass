@@ -106,7 +106,7 @@ test('invalid event names trace location and invalid candidate refuses all evalu
   assert.throws(() => comparePolicies(baseline, { ...candidate, default: 'unknown' }, traces), ValidationError);
 });
 
-test('directory reader sorts nested paths and rejects symlinks', async () => {
+test('directory reader sorts nested paths and rejects symlinks', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'driftglass-directory-'));
   try {
     await mkdir(join(dir, 'b'));
@@ -115,8 +115,14 @@ test('directory reader sorts nested paths and rejects symlinks', async () => {
     await writeFile(join(dir, 'a', 'a.json'), JSON.stringify({ schema_version: 1, events: [event] }));
     await writeFile(join(dir, 'ignore.txt'), 'ignored');
     assert.deepEqual((await readTraceDirectory(dir)).map((item) => item.id), ['a/a.json', 'b/z.json']);
-    await symlink(join(dir, 'a', 'a.json'), join(dir, 'link.json'));
-    await assert.rejects(() => readTraceDirectory(dir), /symlink/);
+    await t.test('rejects a symlink when the host permits creating one', async t => {
+      try { await symlink(join(dir, 'a', 'a.json'), join(dir, 'link.json')); }
+      catch (error) {
+        if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink creation requires permission');
+        throw error;
+      }
+      await assert.rejects(() => readTraceDirectory(dir), /symlink/);
+    });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 

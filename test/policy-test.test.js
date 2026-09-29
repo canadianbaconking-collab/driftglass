@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { testPolicy } from '../src/policy-test/index.js';
 import { ValidationError } from '../src/kernel/index.js';
@@ -56,7 +57,7 @@ test('suite and policy validation fail closed before returning any case results'
 
 test('CLI reports mismatches as 2, malformed input as 1, and keeps CI summary counts-only', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'driftglass-policy-test-'));
-  const cli = new URL('../bin/driftglass.js', import.meta.url).pathname;
+  const cli = fileURLToPath(new URL('../bin/driftglass.js', import.meta.url));
   const run = (...args) => spawnSync(process.execPath, [cli, 'policy', 'test', ...args], { encoding: 'utf8' });
   try {
     const suitePath = join(dir, 'suite.json'), policyPath = join(dir, 'policy.json'), summaryPath = join(dir, 'summary.md');
