@@ -6,6 +6,12 @@
 - Added malformed-relation regression cases for every outcome while retaining the existing scope matrix and golden decisions.
 - Directory tests retain all sorting assertions and isolate symlink validation in a subtest. Windows hosts lacking symlink permission report that subtest as skipped; Linux and capable Windows hosts still exercise rejection.
 
+## v0.7 — implementation complete
+
+- Added strict, versioned declarative policy suites with required decision and optional source, match state, matching IDs, and winning IDs. `testPolicy` validates the full policy and suite, then returns per-case assertion results. Expected approvals can satisfy assertions while remaining nonpassing for automated authority.
+- Added `driftglass policy test`, local mismatch diagnostics, JSON output, counts-only CI summary, and exit codes `0` pass, `2` assertion failure, `1` invalid input. The composite action accepts an optional candidate `test-suite` and stops on failure before its existing historical and exact-diff gates.
+- Added a five-case bookshop suite covering wildcard allowance, explicit deny precedence, and uncovered defaults; the checked-in hosted workflow invokes it. Local `npm run check` passes 183 tests (including 50 original golden decisions). The 10,000-event, 200-rule benchmark median was 44.96 ms on Node 24 Linux. Hosted [CI run #36450976481](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36450976481) passed the suite and composite action smoke check.
+
 ## v0.6 — implementation complete
 
 - Added `assessPolicyChange` and `driftglass ci`: the gate blocks on either historical pass-to-nonpass regression or exact newly allowed authority. Approval is nonpassing; invalid data and an unfinished diff fail without a pass.
@@ -61,7 +67,6 @@ Validation: `npm run check` passes 100 tests (including the 50 golden decisions)
 
 | Version | Planned scope |
 | --- | --- |
-| v0.7 | Policy authoring tests. |
 | v0.8 | Approval evidence and provenance. |
 | v0.9 | Candidate policy generation with coverage and corpus-confidence signals (days, actors, tools, thin evidence). |
 | v1.0 | Threat model and stable release. State that the evaluator trusts trace integrity and completeness; provenance verification is outside scope. |

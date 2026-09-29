@@ -6,8 +6,9 @@ import { readTraceDirectory } from '../src/adapter/json-directory.js';
 import { adaptSourceTrace } from '../src/adapter/source-traces.js';
 import { diffPolicies } from '../src/diff/index.js';
 import { assessPolicyChange, formatCISummary } from '../src/ci/index.js';
+import { testPolicy, formatPolicyTestSummary } from '../src/policy-test/index.js';
 
-const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass diff <baseline.json> <candidate.json> [--json]\n  driftglass ci <baseline.json> <candidate.json> <traces-dir> [--json] [--report <path>] [--summary <path>]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
+const usage = 'Usage:\n  driftglass evaluate <policy.json> <event.json>\n  driftglass replay <policy.json> <traces-dir> [--json]\n  driftglass compare <baseline.json> <candidate.json> <traces-dir> [--json]\n  driftglass diff <baseline.json> <candidate.json> [--json]\n  driftglass ci <baseline.json> <candidate.json> <traces-dir> [--json] [--report <path>] [--summary <path>]\n  driftglass policy test <policy.json> <suite.json> [--json] [--summary <path>]\n  driftglass adapt <coldgate|otlp|openai> <source.json> <mapping.json> > trace.json';
 const [command, ...input] = process.argv.slice(2);
 const json = input.includes('--json');
 if (json) input.splice(input.indexOf('--json'), 1);
@@ -61,6 +62,26 @@ try {
     if (json) console.log(JSON.stringify(result, null, 2));
     else printComparison(result);
     process.exitCode = result.summary.regressions ? 2 : 0;
+  } else if (command === 'policy' && input[0] === 'test') {
+    input.shift();
+    const args = input.splice(0, 2);
+    let summaryPath;
+    if (input.length) {
+      if (input.length !== 2 || input[0] !== '--summary' || input[1].startsWith('--')) throw new Error(usage);
+      summaryPath = input[1];
+    }
+    if (args.length !== 2) throw new Error(usage);
+    const [policy, suite] = await Promise.all(args.map(readJSON));
+    const report = testPolicy(policy, suite);
+    if (summaryPath) await appendFile(summaryPath, formatPolicyTestSummary(report));
+    if (json) console.log(JSON.stringify(report, null, 2));
+    else if (summaryPath) console.log(formatPolicyTestSummary(report));
+    else {
+      console.log(formatPolicyTestSummary(report));
+      for (const item of report.cases) if (!item.passed) for (const mismatch of item.mismatches)
+        console.log(`${item.id}: ${mismatch.field} expected ${JSON.stringify(mismatch.expected)}, got ${JSON.stringify(mismatch.actual)}`);
+    }
+    process.exitCode = report.summary.failed ? 2 : 0;
   } else if (command === 'ci') {
     const args = input.splice(0, 3);
     let reportPath, summaryPath;

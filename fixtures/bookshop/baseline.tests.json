@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "catalog-book",
+      "event": { "schema_version": 1, "tool": "catalog.read", "effect": "READ", "resource": "books/42" },
+      "expect": { "decision": "ALLOW", "source": "rule", "winning_rule_ids": ["catalog"] }
+    },
+    {
+      "id": "shipping-order",
+      "event": { "schema_version": 1, "tool": "shipping.create", "effect": "WRITE", "resource": "orders/101" },
+      "expect": { "decision": "ALLOW", "match_state": "MATCHED", "winning_rule_ids": ["shipping"] }
+    },
+    {
+      "id": "vip-deny-overrides-refund",
+      "event": { "schema_version": 1, "tool": "payments.refund", "effect": "SEND", "resource": "orders/vip" },
+      "expect": { "decision": "DENY", "source": "rule", "matching_rule_ids": ["refund", "vip-deny"], "winning_rule_ids": ["vip-deny"] }
+    },
+    {
+      "id": "missing-resource-falls-to-default",
+      "event": { "schema_version": 1, "tool": "shipping.create", "effect": "WRITE" },
+      "expect": { "decision": "DENY", "source": "default", "match_state": "UNMATCHED", "winning_rule_ids": [] }
+    },
+    {
+      "id": "unknown-tool-falls-to-default",
+      "event": { "schema_version": 1, "tool": "unknown.call", "effect": "EXECUTE" },
+      "expect": { "decision": "DENY", "source": "default", "match_state": "UNMATCHED" }
+    }
+  ]
+}
