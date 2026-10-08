@@ -1,5 +1,18 @@
 # Driftglass project state
 
+## PR #1 review status — 2026-10-08
+
+- Verified source head `6ebf9ad0fc821929635d3f39a25504a54c97fe9a`: [PR #1](https://github.com/canadianbaconking-collab/driftglass/pull/1) is open, draft, unmerged, and reported mergeable. GitHub has no submitted reviews or inline review threads. Mergeability is conflict status, not review approval.
+- Latest associated hosted [CI run #36573745045](https://github.com/canadianbaconking-collab/driftglass/actions/runs/36573745045), completed September 29, tested synthetic merge commit `36ba878e6e42f9d45367340eb0a34d26385547f3` against base `12a4b44d87f7a91f585024e1ef0aa571375717cf` on Ubuntu / Node 22.23.2. Logs confirm boundary checks, 193 passing tests, zero failures or skips, symlink rejection, and all 50 golden decisions. The PR body's 187-pass / one-skip Windows result is an earlier reported validation, not this hosted run.
+- Composite smoke passed five policy assertions and the unchanged synthetic corpus (three traces, eight events). Benchmark validated 10,000 ALLOW decisions and recorded a 78.37 ms median; elapsed time remains observational rather than an enforced release gate.
+- Recommended next action (review judgment): obtain an independent focused review of primitive-string scope validation and matching, confirming rejection before evaluation across allow, deny, and require_approval while valid relationships preserve their boundaries. The inspected diff shows no blocking defect, but no independent approval is recorded; merge readiness is not established. Hosted Windows and minimum-supported Node 20 coverage are absent from the current workflow. Production-export compatibility remains unverified as documented below.
+
+## Review hardening — 2026-09-28
+
+- Scope relationships must be primitive strings from the supported enum. Arrays and objects fail policy loading instead of coercing into valid property keys and later matching a broader scope. The matcher explicitly rejects unknown relationships.
+- Added malformed-relation regression cases for every outcome while retaining the existing scope matrix and golden decisions.
+- Directory tests retain all sorting assertions and isolate symlink validation in a subtest. Windows hosts lacking symlink permission report that subtest as skipped; Linux and capable Windows hosts still exercise rejection.
+
 ## v0.7 — implementation complete
 
 - Added strict, versioned declarative policy suites with required decision and optional source, match state, matching IDs, and winning IDs. `testPolicy` validates the full policy and suite, then returns per-case assertion results. Expected approvals can satisfy assertions while remaining nonpassing for automated authority.
